@@ -27,59 +27,95 @@ def __openAllSites__():
         webbrowser.open(site)
 
 def __countThirdPartySites__(csv):
-    DESTINATION = '172.19.163.142'
-    ip_sites.append(DESTINATION)
+    tmp_ip_sites = ip_sites.copy()
+    SOURCE = '172.19.163.142'
+    tmp_ip_sites.append(SOURCE)
     COUNTER = 0
     dataFrame = pd.read_csv(csv)
     data = dataFrame.iloc[:, [0, 1, 2, 3, 4]].values
-    protocol = [element for element in data[:, 4]]
-    source = [element for element in data[:, 2]]
-    for s in source:
-        if s not in ip_sites:
+    destination = [element for element in data[:, 3]]
+    for d in destination:
+        if d not in tmp_ip_sites:
             COUNTER = COUNTER + 1
-            ip_sites.append(s)
+            tmp_ip_sites.append(d)
+    return COUNTER
+
+def __countHTTPSSites__(csv):
+    SOURCE = '172.19.163.142'
+    ip_sites.append(SOURCE)
+    COUNTER = 0
+    dataFrame = pd.read_csv(csv)
+    data = dataFrame.iloc[:, [0, 1, 2, 3, 4, 5, 6]].values
+    port = [element for element in data [:, 6]]
+    for p in port:
+        if str(p) == '443.0':
+            COUNTER = COUNTER + 1
     return COUNTER
 
 if __name__ == '__main__':
     __getTopSites__()
     print('IPs and URLs obtained...')
+    print()
+
+    ''' 
     print('Start capture the traffic...')
     time.sleep(10)
     __openAllSites__()
     print('Capturing...')
     inp = input('Press any key to continue...')
-    
+    print()
+    '''
+
     ### TEST 5 MINUTES CAPTURE ###
     print('Test on 5 minutes capture')
-    tmp = ip_sites.copy()
     start_time = time.time()
     print('Number of Third Party Sites: ' + str(__countThirdPartySites__('capture-five-minutes.csv')))
     print('Time elapsed: ' + str(round(time.time() - start_time, 2)) + ' second(s)')
-    
+    print()
+    start_time = time.time()
+    print('Number of HTTPs request: ' + str(__countHTTPSSites__('capture-five-minutes.csv')))
+    print('Time elapsed: ' + str(round(time.time() - start_time, 2)) + ' second(s)')
+    print()
+
     ### TEST 10 MINUTES CAPTURE ###
     print('Test on 10 minutes capture')
-    ip_sites = tmp.copy()
     start_time = time.time()
     print('Number of Third Party Sites: ' + str(__countThirdPartySites__('capture-ten-minutes.csv')))
     print('Time elapsed: ' + str(round(time.time() - start_time, 2)) + ' second(s)')
+    print()
+    start_time = time.time()
+    print('Number of HTTPs request: ' + str(__countHTTPSSites__('capture-ten-minutes.csv')))
+    print('Time elapsed: ' + str(round(time.time() - start_time, 2)) + ' second(s)')
+    print()
 
     ### TEST 15 MINUTES CAPTURE ###
     print('Test on 15 minutes capture')
-    ip_sites = tmp.copy()
     start_time = time.time()
     print('Number of Third Party Sites: ' + str(__countThirdPartySites__('capture-fifteen-minutes.csv')))
     print('Time elapsed: ' + str(round(time.time() - start_time, 2)) + ' second(s)')
+    print()
+    start_time = time.time()
+    print('Number of HTTPs request: ' + str(__countHTTPSSites__('capture-fifteen-minutes.csv')))
+    print('Time elapsed: ' + str(round(time.time() - start_time, 2)) + ' second(s)')
+    print()
 
     ### TEST 20 MINUTES CAPTURE ###
     print('Test on 20 minutes capture')
-    ip_sites = tmp.copy()
     start_time = time.time()
     print('Number of Third Party Sites: ' + str(__countThirdPartySites__('capture-twenty-minutes.csv')))
     print('Time elapsed: ' + str(round(time.time() - start_time, 2)) + ' second(s)')
+    print()
+    start_time = time.time()
+    print('Number of HTTPs request: ' + str(__countHTTPSSites__('capture-twenty-minutes.csv')))
+    print('Time elapsed: ' + str(round(time.time() - start_time, 2)) + ' second(s)')
+    print()
 
     ### TEST 25 MINUTES CAPTURE ###
     print('Test on 25 minutes capture')
-    ip_sites = tmp.copy()
     start_time = time.time()
     print('Number of Third Party Sites: ' + str(__countThirdPartySites__('capture-twentyfive-minutes.csv')))
+    print('Time elapsed: ' + str(round(time.time() - start_time, 2)) + ' second(s)')
+    print()
+    start_time = time.time()
+    print('Number of HTTPs request: ' + str(__countHTTPSSites__('capture-twentyfive-minutes.csv')))
     print('Time elapsed: ' + str(round(time.time() - start_time, 2)) + ' second(s)')
