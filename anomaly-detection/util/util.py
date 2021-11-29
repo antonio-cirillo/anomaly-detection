@@ -20,3 +20,26 @@ def plotFeatureImportances(classifier, features, name_file, n_elements = 5):
 
     fig.savefig(name_file, dpi = 100)
     plt.show()
+
+def minimizeDataFrameByFeatureImportances(classifier, features, path, min):
+
+    feature_imp = pd.Series(classifier.feature_importances_, 
+        index = features).sort_values(ascending = False)
+
+    dataFrame = pd.read_csv(path, encoding = 'utf-8')
+    returnDF = None
+    count = 0
+
+    for feature, impurity in feature_imp.items():
+        if count == 0:
+            returnDF = dataFrame[feature]
+            count = impurity
+        elif count < min:
+            returnDF = pd.concat([returnDF, dataFrame[feature]], axis = 1)
+            count += impurity
+        else:
+            break
+
+    returnDF.to_csv(path.replace('.csv', '_REDUCED.csv'))
+
+    return returnDF
