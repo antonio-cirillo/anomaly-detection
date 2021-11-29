@@ -6,8 +6,6 @@ import numpy as np
 import time
 import os
 
-start_time = time.time()
-
 # Leggo il file CSV
 dataFrame = pd.read_csv(
     os.getcwd() + '\\dataset\\UNSW_NB15_testing-set.csv',
@@ -33,6 +31,8 @@ X = StandardScaler().fit_transform(X)
 from sklearn.model_selection import train_test_split
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = 0.3)
 
+start_time = time.time()
+
 # Creiamo un'istanza di RandomForest composta da 100 alberi di decisione
 from sklearn.ensemble import RandomForestClassifier
 clf = RandomForestClassifier(n_estimators = 100)
@@ -45,11 +45,71 @@ y_pred = clf.predict(X_test)
 
 # Confronto il vettore target con il vettore delle predizioni
 from sklearn import metrics
-print("Accuracy: " + str(metrics.accuracy_score(y_test, y_pred)))
+print("\nAccuracy by considering all features: " + str(metrics.accuracy_score(y_test, y_pred)))
 
 # Stampo il tempo di esecuzione dell'algoritmo
-print('\nTime elapsed: ' + str(round(time.time() - start_time, 2)) + ' second(s)')
+print('Time elapsed: ' + str(round(time.time() - start_time, 2)) + ' second(s)')
 
 # Visualizzo le prime 10 features più importanti del dataset
 from util.util import plotFeatureImportances
 plotFeatureImportances(clf, FEATURES, 'image/feature-importances.png', 10)
+
+# Estraggo un dataframe più piccolo utilizzando solo le features più importanti
+from util.util import minimizeDataFrameByFeatureImportances
+minDataFrame = minimizeDataFrameByFeatureImportances(clf, FEATURES, 
+    os.getcwd() + '\\dataset\\UNSW_NB15_testing-set.csv', .9)
+
+# Ripeto l'addestramento utilizzando il dataframe aggiornato
+FEATURES = minDataFrame.columns.values
+N_FEATURES = int(len(FEATURES))
+
+X = minDataFrame.iloc[:, 0:N_FEATURES].values
+# Il vettore y non ha bisogno di subire nessuna modifica
+
+X = StandardScaler().fit_transform(X)
+
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = 0.3)
+
+start_time = time.time()
+
+clf = RandomForestClassifier(n_estimators = 100)
+clf.fit(X_train, y_train)
+y_pred = clf.predict(X_test)
+
+print("\nAccuracy by considering the best " + str(N_FEATURES)
+    + " features: " + str(metrics.accuracy_score(y_test, y_pred)))
+print('Time elapsed: ' + str(round(time.time() - start_time, 2)) + ' second(s)')
+
+# Visualizzo di nuovo le prime 10 features più importanti per vedere di quanto variano
+# i valori dell'impurità per ogni features
+plotFeatureImportances(clf, FEATURES, 'image/feature-importances-after-reducing.png', 10)
+
+"""
+# Addestriamo l'algoritmo sul dataset modificato dalla PCA
+dataFrame = pd.read_csv(
+    os.getcwd() + '\\dataset\\UNSW_NB15_testing-set_PCA.csv',
+    encoding = 'utf-8'
+)
+
+FEATURES = dataFrame.columns.values
+N_FEATURES = int(len(FEATURES)) - 1
+FEATURES = FEATURES[1 : N_FEATURES]
+
+X = dataFrame.iloc[:, np.arange(1, N_FEATURES)].values
+y = dataFrame.iloc[:, N_FEATURES].values
+
+X = StandardScaler().fit_transform(X)
+
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = 0.3)
+
+start_time = time.time()
+
+clf = RandomForestClassifier(n_estimators = 100)
+clf.fit(X_train, y_train)
+
+y_pred = clf.predict(X_test)
+
+print("\nAccuracy after PCA: " + str(metrics.accuracy_score(y_test, y_pred)))
+
+print('Time elapsed: ' + str(round(time.time() - start_time, 2)) + ' second(s)')
+"""
