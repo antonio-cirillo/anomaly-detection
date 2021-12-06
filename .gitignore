@@ -1,3 +1,4 @@
-
-anomaly-detection/dataset/UNSW_NB15_testing-set.csv
-anomaly-detection/dataset/UNSW_NB15_testing-set_REDUCED.csv
+anomaly-detection/dataset
+anomaly-detection/image
+anomaly-detection-binary/dataset
+anomaly-detection-binary/image
