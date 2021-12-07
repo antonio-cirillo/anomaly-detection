@@ -3,19 +3,28 @@ from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestClassifier
 from sklearn import metrics
 
-from util.util import Sample
+from util.sample import Sample
 
 import numpy as np
+import logging
 import time
 import os
+
+SEPARATOR = '\n------------------------------------\n'
+
+# Inizializzo il logging
+logging.basicConfig(filename = os.getcwd() + '\\log\\random-forest.log', 
+    format = '%(message)s', level = logging.DEBUG, filemode = 'w')
 
 # Inizializzo l'array list_of_csv con i path assoluti dei file csv che andremo ad utilizzare
 list_of_csv = []
 for index in np.arange(1, 5):
     list_of_csv.append(os.getcwd() + '\\dataset\\UNSW-NB15_' + str(index) + '.csv')
 
-# Creo un'istanza dell'oggetto Sample
+# Creo un'istanza dell'oggetto Sample e loggo lo stato del dataframe
 sample = Sample(list_of_csv)
+logging.info('Dataframe status before modifies:')
+logging.info(sample.getDataFrameStatus())
 
 for w in [0.25, 0.5, 0.75, 1]:
     # L'array FEATURES contiene tutte le features che andremo ad utilizzare
@@ -26,17 +35,23 @@ for w in [0.25, 0.5, 0.75, 1]:
         'ct_dst_ltm', 'ct_src_dport_ltm', 'ct_dst_sport_ltm', 'ct_dst_src_ltm', 'is_ftp_login',
         'ct_ftp_cmd', 'ct_flw_http_mthd', 'ct_src_ltm', 'ct_srv_dst', 'is_sm_ips_ports',
         'attack_cat', 'label']
-    print('Test with weight:', w)
+    
+    # Loggo lo stato di avanzamento
+    print('\nStart test with weight ' + str(w) + '...')
+    logging.info(SEPARATOR)
+    logging.info('Test with weight: ' + str(w) + '\n')
+
     # Ottengo un sotto dataframe tramite il metodo createWeightedDataFrame
     sample.createWeightedDataFrame(weight = w)
+    
     # Ottengo un sotto dataframe utilizzando solo le features contenute nell'array FEATURES
     df = sample.extractSubDataFrame(FEATURES)
     # Visualizza lo stato del DataFrame
     # Coppie (x, y) dove:
     # x è il tipo di attacco
     # y è il numero di entry contenute nel dataframe per quell'attacco
-    print('Dataframe status:')
-    sample.printDataFrameStatus()
+    logging.info('Dataframe status:')
+    logging.info(sample.getDataFrameStatus())
 
     # Assegniamo a FEATURES le features che effettivamente esistono
     FEATURES = df.columns.values
@@ -69,8 +84,12 @@ for w in [0.25, 0.5, 0.75, 1]:
     # Eseguiamo l'algoritmo sul dataset di testing
     y_pred = clf.predict(X_test)
 
-    # Confronto il vettore target con il vettore delle predizioni
-    print("Accuracy:", str(metrics.accuracy_score(y_test, y_pred)))
+    # Confronto il vettore target con il vettore delle predizioni per misurare e mostrare l'accuracy
+    accuracystamp = '\nAccuracy: ' + str(metrics.accuracy_score(y_test, y_pred))
+    logging.info(accuracystamp)
 
     # Stampo il tempo di esecuzione dell'algoritmo
-    print('Time elapsed:', str(round(time.time() - start_time, 2)) + ' second(s)\n')
+    timestamp = '\nTime elapsed: ' + str(round(time.time() - start_time, 2)) + ' second(s)'
+    logging.info(timestamp)
+
+    print('...Finish test with weight ' + str(w))

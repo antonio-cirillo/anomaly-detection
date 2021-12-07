@@ -2,3 +2,6 @@ anomaly-detection/dataset
 anomaly-detection/image
 anomaly-detection-binary/dataset
 anomaly-detection-binary/image
+anomaly-detection-binary/log/random-forest.log
+anomaly-detection-binary/util/__pycache__/sample.cpython-37.pyc
+anomaly-detection-binary/util/__pycache__/util.cpython-37.pyc
