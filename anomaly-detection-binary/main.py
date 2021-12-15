@@ -4,6 +4,8 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn import metrics
 
 from util.sample import Sample
+from util.util import measureAccuracy
+from util.util import displayHeatMap
 
 import numpy as np
 import logging
@@ -11,6 +13,9 @@ import time
 import os
 
 SEPARATOR = '\n------------------------------------\n'
+ATTACK_CAT = ['Normal', 'Backdoors', 'Analysis', 'Fuzzers', 'Shellcode', 'Reconnaissance', 
+    'Exploits', 'DoS', 'Worms', 'Generic']
+IMAGE_PATH = os.getcwd() + '\\image\\'
 
 # Inizializzo il logging
 logging.basicConfig(filename = os.getcwd() + '\\log\\random-forest.log', 
@@ -46,10 +51,12 @@ for w in [0.25, 0.5, 0.75, 1]:
     
     # Ottengo un sotto dataframe utilizzando solo le features contenute nell'array FEATURES
     df = sample.extractSubDataFrame(FEATURES)
+
     # Visualizza lo stato del DataFrame
     # Coppie (x, y) dove:
     # x è il tipo di attacco
     # y è il numero di entry contenute nel dataframe per quell'attacco
+
     logging.info('Dataframe status:')
     logging.info(sample.getDataFrameStatus())
 
@@ -84,12 +91,15 @@ for w in [0.25, 0.5, 0.75, 1]:
     # Eseguiamo l'algoritmo sul dataset di testing
     y_pred = clf.predict(X_test)
 
-    # Confronto il vettore target con il vettore delle predizioni per misurare e mostrare l'accuracy
-    accuracystamp = '\nAccuracy: ' + str(metrics.accuracy_score(y_test, y_pred))
-    logging.info(accuracystamp)
-
     # Stampo il tempo di esecuzione dell'algoritmo
     timestamp = '\nTime elapsed: ' + str(round(time.time() - start_time, 2)) + ' second(s)'
     logging.info(timestamp)
 
+    # Confronto il vettore target con il vettore delle predizioni per misurare e mostrare l'accuracy
+    accuracystamp = '\nAccuracy: ' + str(metrics.accuracy_score(y_test, y_pred))
+    logging.info(accuracystamp)
+
+    measures = measureAccuracy(labels = ATTACK_CAT, y_test = y_test, y_pred = y_pred)
+    displayHeatMap(measures, IMAGE_PATH + 'heat-map-weight' + str(w) + '.png')
+    
     print('...Finish test with weight ' + str(w))
