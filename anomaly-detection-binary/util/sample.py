@@ -182,6 +182,11 @@ class Sample:
         ser = pd.Series(data = self.count_attack_cat_list, index = self.attack_cat_list_)
         return ser
 
+    def getLabelsList(self):
+        l = self.attack_cat_list_.copy()
+        l = np.roll(l, 1)
+        return l
+
     def update_status_(self):
         # Dichiaro l'array contenente il numero di entry per attacco
         self.count_attack_cat_list = []
