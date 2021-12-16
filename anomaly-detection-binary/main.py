@@ -6,6 +6,7 @@ from sklearn import metrics
 from util.sample import Sample
 from util.util import measureAccuracy
 from util.util import displayHeatMap
+from util.util import displayBarStacked
 
 import numpy as np
 import logging
@@ -96,10 +97,21 @@ for w in [0.25, 0.5, 0.75, 1]:
     logging.info(timestamp)
 
     # Confronto il vettore target con il vettore delle predizioni per misurare e mostrare l'accuracy
-    accuracystamp = '\nAccuracy: ' + str(metrics.accuracy_score(y_test, y_pred))
+    accuracystamp = '\nAccuracy: ' + str(metrics.accuracy_score(y_test, y_pred)) + '\n'
     logging.info(accuracystamp)
 
-    measures = measureAccuracy(labels = ATTACK_CAT, y_test = y_test, y_pred = y_pred)
+    # Ottengo il dataset di misurazione e lo loggo
+    measures = measureAccuracy(labels = sample.getLabelsList(), y_test = y_test, y_pred = y_pred)
+    logging.info(measures)
+
+    # Disabilito il logging
+    logging.disable(logging.CRITICAL)
+    # Creo l'heatmap e il barchart relativo alle misurazioni
     displayHeatMap(measures, IMAGE_PATH + 'heat-map-weight' + str(w) + '.png')
-    
+    colors = ['#1D2F6F', '#8390FA']
+    displayBarStacked(measures, sample.getLabelsList()[1:], colors, 'Errors stacked', '',
+        IMAGE_PATH + 'bar-stacked' + str(w) + '.png')
+    # Riabilito il logging
+    logging.disable(logging.NOTSET)
+
     print('...Finish test with weight ' + str(w))
