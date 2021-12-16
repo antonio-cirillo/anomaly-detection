@@ -5,6 +5,17 @@ class Sample:
     
     def __init__(self, listOfCsv):
         
+        """
+
+        Variabili di istanza:
+        attack_cat_list_: lista dei vari attack_cat in ordine crescente in base alla frequenza nel dataset
+        count_attack_cat_list: lista delle varie frequenze per ogni attack_cat all'interno del dataframe
+        df_list_: lista dei sottodataframe in ordine crescente in base alla frequenza nel dataset
+        sampleDf_: dataframe soggetto alle modifiche dei vari metodi
+        minimum_: numero di rows per l'attacco meno presente nel dataset
+
+        """
+
         # Memorizzo i tipi di attacchi
         self.attack_cat_list_ = ['Backdoors', 'Analysis', 'Fuzzers', 
             'Shellcode', 'Reconnaissance', 'Exploits', 'DoS', 'Worms', 'Generic']
@@ -142,9 +153,12 @@ class Sample:
 
     def extractSubDataFrame(self, features, path = None):
 
+        # Inizializzo il dataframe a None
         sampleDf = None
+        # Flag sulla creazione del dataframe
         init = False
 
+        # Estraggo le colonne interessate
         for feature in features:
             try:
                 if not init:
@@ -179,6 +193,7 @@ class Sample:
         return df
 
     def getDataFrameStatus(self):
+        # Ritorno le coppie (tipo di attacco, quantità di quell'attacco nel dataframe)
         ser = pd.Series(data = self.count_attack_cat_list, index = self.attack_cat_list_)
         return ser
 
@@ -191,6 +206,7 @@ class Sample:
         # Dichiaro l'array contenente il numero di entry per attacco
         self.count_attack_cat_list = []
 
+        # Conto gli elementi per ogni attack_cat e li inserisco nell'array
         for attack in self.attack_cat_list_:
             if attack == 'Normal':
                 df = self.sampleDf_.loc[self.sampleDf_['label'] == 0]
