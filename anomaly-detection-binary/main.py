@@ -16,10 +16,16 @@ import os
 SEPARATOR = '\n------------------------------------\n'
 ATTACK_CAT = ['Normal', 'Backdoors', 'Analysis', 'Fuzzers', 'Shellcode', 'Reconnaissance', 
     'Exploits', 'DoS', 'Worms', 'Generic']
-IMAGE_PATH = os.getcwd() + '\\image\\'
+IMAGE_PATH = os.getcwd() + '\\image\\01 - Test differents weight\\'
 
 # Inizializzo il logging
-logging.basicConfig(filename = os.getcwd() + '\\log\\random-forest.log', 
+PATH_FILE_LOG = os.getcwd() + '\\log\\01 - Test differents weight\\logger.log'
+try:
+    os.stat(os.path.dirname(PATH_FILE_LOG))
+except:
+    os.mkdir(os.path.dirname(PATH_FILE_LOG))
+
+logging.basicConfig(filename = PATH_FILE_LOG, 
     format = '%(message)s', level = logging.DEBUG, filemode = 'w')
 
 # Inizializzo l'array list_of_csv con i path assoluti dei file csv che andremo ad utilizzare

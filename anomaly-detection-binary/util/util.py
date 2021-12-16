@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
 import numpy as np
+import os
 
 def measureAccuracy(labels = [], y_pred = None, y_test = None):
     n_labels = int(len(labels))
@@ -39,22 +40,14 @@ def displayHeatMap(df, name_file):
     ax = sns.heatmap(df_copy, annot = True)
     
     fig.tight_layout()
+
+    try:
+        os.stat(os.path.dirname(name_file))
+    except:
+        os.mkdir(os.path.dirname(name_file))
+
     fig.savefig(name_file, dpi = 100)
     plt.close()
-
-def deleteStringColumn(df):
-    cols_to_remove = []
-
-    for col in df.columns:
-        try:
-         _ = df[col].astype(float)
-        except ValueError:
-            cols_to_remove.append(col)
-            pass
-
-    # keep only the columns in df that do not contain string
-    df = df[[col for col in df.columns if col not in cols_to_remove]]
-    return df
 
 def plotFeatureImportances(classifier, features, name_file, n_elements = 5):
 
@@ -71,31 +64,13 @@ def plotFeatureImportances(classifier, features, name_file, n_elements = 5):
 
     fig.tight_layout()
 
+    try:
+        os.stat(os.path.dirname(name_file))
+    except:
+        os.mkdir(os.path.dirname(name_file))
+
     fig.savefig(name_file, dpi = 100)
     plt.show()
-
-def minimizeDataFrameByFeatureImportances(feature_imp, features, path, min):
-    
-    feature_imp = pd.Series(feature_imp, 
-        index = features).sort_values(ascending = False)
-
-    dataFrame = pd.read_csv(path, encoding = 'utf-8')
-    returnDF = None
-    count = 0
-
-    for feature, impurity in feature_imp.items():
-        if count == 0:
-            returnDF = dataFrame[feature]
-            count = impurity
-        elif count < min:
-            returnDF = pd.concat([returnDF, dataFrame[feature]], axis = 1)
-            count += impurity
-        else:
-            break
-
-    returnDF.to_csv(path.replace('.csv', '_REDUCED.csv'))
-
-    return returnDF
 
 def displayBarStacked(df, labels, colors, title, subtitle, name_file):
     df_copy = df.copy()
@@ -144,6 +119,11 @@ def displayBarStacked(df, labels, colors, title, subtitle, name_file):
     plt.ylim(-0.5, ax.get_yticks()[-1] + 0.5)
     ax.xaxis.grid(color = 'gray', linestyle = 'dashed')
     fig.tight_layout()
+
+    try:
+        os.stat(os.path.dirname(name_file))
+    except:
+        os.mkdir(os.path.dirname(name_file))
     
     fig.savefig(name_file, dpi = 100)
     plt.close()
