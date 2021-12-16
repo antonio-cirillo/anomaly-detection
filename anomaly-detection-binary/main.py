@@ -13,13 +13,15 @@ import logging
 import time
 import os
 
+# Dichiarazione delle costanti
 SEPARATOR = '\n------------------------------------\n'
+NAME_DIR = '01 - Test differents weight'
 ATTACK_CAT = ['Normal', 'Backdoors', 'Analysis', 'Fuzzers', 'Shellcode', 'Reconnaissance', 
     'Exploits', 'DoS', 'Worms', 'Generic']
-IMAGE_PATH = os.getcwd() + '\\image\\01 - Test differents weight\\'
+IMAGE_PATH = os.getcwd() + '\\image\\' + NAME_DIR + '\\'
+PATH_FILE_LOG = os.getcwd() + '\\log\\' + NAME_DIR + '\\logger.log'
 
 # Inizializzo il logging
-PATH_FILE_LOG = os.getcwd() + '\\log\\01 - Test differents weight\\logger.log'
 try:
     os.stat(os.path.dirname(PATH_FILE_LOG))
 except:
@@ -38,6 +40,7 @@ sample = Sample(list_of_csv)
 logging.info('Dataframe status before modifies:')
 logging.info(sample.getDataFrameStatus())
 
+"""
 for w in [0.25, 0.5, 0.75, 1]:
     # L'array FEATURES contiene tutte le features che andremo ad utilizzare
     FEATURES = ['id', 'dur', 'proto', 'service', 'state', 'spkts', 'dpkts', 'sbytes', 'dbytes',
@@ -121,3 +124,4 @@ for w in [0.25, 0.5, 0.75, 1]:
     logging.disable(logging.NOTSET)
 
     print('...Finish test with weight ' + str(w))
+"""
