@@ -7,6 +7,7 @@ from util.sample import Sample
 from util.util import measureAccuracy
 from util.util import displayHeatMap
 from util.util import displayBarStacked
+from util.util import createDirectory
 
 import numpy as np
 import logging
@@ -15,32 +16,42 @@ import os
 
 # Dichiarazione delle costanti
 SEPARATOR = '\n------------------------------------\n'
-NAME_DIR = '01 - Test differents weight'
+NAME_DIR = '\\01 - Test differents weight\\'
+CWD = os.getcwd() + '\\'
+BAR_STACKED = 'Bar Stacked\\'
+HEAT_MAP = 'Heat Map\\'
 ATTACK_CAT = ['Normal', 'Backdoors', 'Analysis', 'Fuzzers', 'Shellcode', 'Reconnaissance', 
     'Exploits', 'DoS', 'Worms', 'Generic']
-IMAGE_PATH = os.getcwd() + '\\image\\' + NAME_DIR + '\\'
-PATH_FILE_LOG = os.getcwd() + '\\log\\' + NAME_DIR + '\\logger.log'
+
+# Dichiaro i path per le immagini e il log
+IMAGE_PATH = CWD + 'image' + NAME_DIR
+IMAGE_PATH_BAR_STACKED = IMAGE_PATH + BAR_STACKED 
+IMAGE_PATH_HEAT_MAP = IMAGE_PATH + HEAT_MAP
+PATH_FILE_LOG = CWD + 'log' + NAME_DIR + '\\logger.log'
+
+# Insieme delle cartelle che conterranno le risorse dell'esecuzione
+DIRECTORY = ['image\\', 'log\\', 'image' + NAME_DIR, 'log' + NAME_DIR,
+    'image' + NAME_DIR + BAR_STACKED, 'image' + NAME_DIR + HEAT_MAP]
+
+# Creo le cartelle se non esistono
+for dir in DIRECTORY:
+    createDirectory(CWD + dir)
 
 # Inizializzo il logging
-try:
-    os.stat(os.path.dirname(PATH_FILE_LOG))
-except:
-    os.mkdir(os.path.dirname(PATH_FILE_LOG))
-
 logging.basicConfig(filename = PATH_FILE_LOG, 
     format = '%(message)s', level = logging.DEBUG, filemode = 'w')
+
 
 # Inizializzo l'array list_of_csv con i path assoluti dei file csv che andremo ad utilizzare
 list_of_csv = []
 for index in np.arange(1, 5):
-    list_of_csv.append(os.getcwd() + '\\dataset\\UNSW-NB15_' + str(index) + '.csv')
+    list_of_csv.append(CWD + 'dataset\\UNSW-NB15_' + str(index) + '.csv')
 
 # Creo un'istanza dell'oggetto Sample e loggo lo stato del dataframe
 sample = Sample(list_of_csv)
 logging.info('Dataframe status before modifies:')
 logging.info(sample.getDataFrameStatus())
 
-"""
 for w in [0.25, 0.5, 0.75, 1]:
     # L'array FEATURES contiene tutte le features che andremo ad utilizzare
     FEATURES = ['id', 'dur', 'proto', 'service', 'state', 'spkts', 'dpkts', 'sbytes', 'dbytes',
@@ -116,12 +127,11 @@ for w in [0.25, 0.5, 0.75, 1]:
     # Disabilito il logging
     logging.disable(logging.CRITICAL)
     # Creo l'heatmap e il barchart relativo alle misurazioni
-    displayHeatMap(measures, IMAGE_PATH + 'heat-map-weight' + str(w) + '.png')
+    displayHeatMap(measures, IMAGE_PATH_HEAT_MAP + 'heat-map-weight' + str(w) + '.png')
     colors = ['#1D2F6F', '#8390FA']
-    displayBarStacked(measures, sample.getLabelsList()[1:], colors, 'Errors stacked', '',
-        IMAGE_PATH + 'bar-stacked' + str(w) + '.png')
+    displayBarStacked(measures, sample.getLabelsList()[1:], colors, 'Errors stacked',
+        IMAGE_PATH_BAR_STACKED + 'bar-stacked' + str(w) + '.png')
     # Riabilito il logging
     logging.disable(logging.NOTSET)
 
     print('...Finish test with weight ' + str(w))
-"""
