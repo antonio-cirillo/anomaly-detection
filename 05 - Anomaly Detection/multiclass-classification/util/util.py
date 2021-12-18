@@ -32,21 +32,23 @@ def measureAccuracy(labels = [], y_pred = None, y_test = None):
     return df
 
 def displayHeatMap(df, name_file):
+    # Lavoro su una copia del dataframe
     df_copy = df.copy()
+    # Riporto i dati in percentuale
     df_copy = df_copy.apply(lambda x: round(x / x.sum(), 2), axis=1)
 
+    # Creo l'heatmap
     fig, ax = plt.subplots()
     ax = sns.heatmap(df_copy, annot = True)
-    
     fig.tight_layout()
 
-    try:
-        os.stat(os.path.dirname(name_file))
-    except:
-        os.mkdir(os.path.dirname(name_file))
-
+    # Salvo la figura
     fig.savefig(name_file, dpi = 100)
+    # Chiudo il ploting
     plt.close()
+
+    # Restituisco l'accuracy relativa ad ogni attack_cat
+    return np.diag(df_copy)
 
 def displayBarStacked(df, labels, colors, title, name_file):
     df_copy = df.copy()
@@ -96,6 +98,65 @@ def displayBarStacked(df, labels, colors, title, name_file):
     
     fig.savefig(name_file, dpi = 100)
     plt.close()
+
+def displayGroupedBar(weights, accuracies, labels):
+    N_WEIGHTS = int(len(weights))
+    N_LABELS = int(len(labels))
+
+    accuracies_df = np.array(accuracies.copy()).T.tolist()
+
+    for i in range(N_LABELS):
+        tmp = []
+        tmp.append(labels[i])
+        tmp.extend(accuracies_df[i])
+        accuracies_df[i] = tmp
+    
+    columns = []
+    columns.append('Attack cat')
+    columns.extend(weights)
+
+    df = pd.DataFrame(accuracies_df,
+        columns = columns)
+
+    df.plot(x = 'Attack cat',
+        kind = 'bar',
+        stacked = False,
+        title = 'Grouped Bar Graph of attack_cat accuracy')
+
+    plt.legend(loc = 'upper center', bbox_to_anchor = (0.5, -0.15),
+          fancybox = True, shadow = True, ncol = N_WEIGHTS)
+
+    plt.tick_params(axis = 'x', which = 'major', labelsize = 9)
+
+    plt.xticks(rotation = 0)
+    plt.xlabel('Weight')
+    plt.tight_layout()
+
+    plt.show()
+
+    """
+    men_means = ['0.25', 20, 34, 30, 35, 27]
+    women_means = ['0.5', 25, 32, 34, 20, 25]
+    women2_means = ['0.75', 25, 32, 34, 20, 25]
+    women3_means = ['1', 25, 32, 34, 20, 25]
+
+    df = pd.DataFrame([men_means, women_means, women2_means, women3_means],
+        columns = ['Weigth', 'G1', 'G2', 'G3', 'G4', 'G5'])
+
+    df.plot(x = 'Weigth',
+        kind = 'bar',
+        stacked = False,
+        title = 'Grouped Bar Graph of attack_cat accuracy')
+
+    plt.legend(loc = 'upper center', bbox_to_anchor = (0.5, -0.15),
+          fancybox = True, shadow = True, ncol = 5)
+    
+    plt.xticks(rotation = 0)
+    plt.xlabel('Weights')
+    plt.tight_layout()
+
+    plt.show()
+    """
 
 def createDirectory(path):
     try:
