@@ -3,7 +3,8 @@ import numpy as np
 
 class Sample:
     
-    def __init__(self, listOfCsv):
+    def __init__(self, listOfCsv, attack_cat_list = ['Backdoors', 'Analysis', 'Fuzzers', 
+            'Shellcode', 'Reconnaissance', 'Exploits', 'DoS', 'Worms', 'Generic']):
         
         """
 
@@ -17,8 +18,7 @@ class Sample:
         """
 
         # Memorizzo i tipi di attacchi
-        self.attack_cat_list_ = ['Backdoors', 'Analysis', 'Fuzzers', 
-            'Shellcode', 'Reconnaissance', 'Exploits', 'DoS', 'Worms', 'Generic']
+        self.attack_cat_list_ = attack_cat_list
 
         # Memorizzo tutti i sotto dataframe
         self.df_list_ = []
