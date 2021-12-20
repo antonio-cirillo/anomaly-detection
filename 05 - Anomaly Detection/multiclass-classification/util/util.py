@@ -2,6 +2,8 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
 import numpy as np
+
+import logging
 import os
 
 def measureAccuracy(labels = [], y_pred = None, y_test = None):
@@ -32,6 +34,9 @@ def measureAccuracy(labels = [], y_pred = None, y_test = None):
     return df
 
 def displayHeatMap(df, name_file):
+    # Disabilito il logging
+    logging.disable(logging.CRITICAL)
+    
     # Lavoro su una copia del dataframe
     df_copy = df.copy()
     # Riporto i dati in percentuale
@@ -47,10 +52,16 @@ def displayHeatMap(df, name_file):
     # Chiudo il ploting
     plt.close()
 
+    # Riabilito il logging
+    logging.disable(logging.NOTSET)
+
     # Restituisco l'accuracy relativa ad ogni attack_cat
     return np.diag(df_copy)
 
 def displayBarStacked(df, labels, colors, title, name_file):
+    # Disabilito il logging
+    logging.disable(logging.CRITICAL)
+
     df_copy = df.copy()
 
     df_normal = df_copy['Normal'].values
@@ -96,10 +107,16 @@ def displayBarStacked(df, labels, colors, title, name_file):
     ax.xaxis.grid(color = 'gray', linestyle = 'dashed')
     fig.tight_layout()
     
+    # Riabilito il logging
+    logging.disable(logging.NOTSET)
+
     fig.savefig(name_file, dpi = 100)
     plt.close()
 
-def displayGroupedBar(weights, accuracies, labels):
+def displayGroupedBar(weights, accuracies, labels, name_file):
+    # Disabilito il logging
+    logging.disable(logging.CRITICAL)
+
     N_WEIGHTS = int(len(weights))
     N_LABELS = int(len(labels))
 
@@ -107,7 +124,7 @@ def displayGroupedBar(weights, accuracies, labels):
 
     for i in range(N_LABELS):
         tmp = []
-        tmp.append(labels[i])
+        tmp.append(labels[i][0:5])
         tmp.extend(accuracies_df[i])
         accuracies_df[i] = tmp
     
@@ -128,35 +145,15 @@ def displayGroupedBar(weights, accuracies, labels):
 
     plt.tick_params(axis = 'x', which = 'major', labelsize = 9)
 
-    plt.xticks(rotation = 0)
+    plt.xticks(rotation = 90)
     plt.xlabel('Weight')
     plt.tight_layout()
 
-    plt.show()
+    # Riabilito il logging
+    logging.disable(logging.NOTSET)
 
-    """
-    men_means = ['0.25', 20, 34, 30, 35, 27]
-    women_means = ['0.5', 25, 32, 34, 20, 25]
-    women2_means = ['0.75', 25, 32, 34, 20, 25]
-    women3_means = ['1', 25, 32, 34, 20, 25]
-
-    df = pd.DataFrame([men_means, women_means, women2_means, women3_means],
-        columns = ['Weigth', 'G1', 'G2', 'G3', 'G4', 'G5'])
-
-    df.plot(x = 'Weigth',
-        kind = 'bar',
-        stacked = False,
-        title = 'Grouped Bar Graph of attack_cat accuracy')
-
-    plt.legend(loc = 'upper center', bbox_to_anchor = (0.5, -0.15),
-          fancybox = True, shadow = True, ncol = 5)
-    
-    plt.xticks(rotation = 0)
-    plt.xlabel('Weights')
-    plt.tight_layout()
-
-    plt.show()
-    """
+    plt.savefig(name_file, dpi = 100)
+    plt.close()
 
 def createDirectory(path):
     try:
@@ -165,3 +162,13 @@ def createDirectory(path):
     except:
         # Se la cartella già esiste notifico l'utente
         print('Direcory: ' + os.path.dirname(path) + ' already exists...')
+
+def logStatusTrainTestSplit(labels, X_train, X_test, y_train, y_test):
+    # Loggo lo stato di train test split
+    unique, counts = np.unique(y_train, return_counts = True)
+    logging.info("y_train status:")
+    logging.info(dict(zip(labels, counts)))
+
+    unique, counts = np.unique(y_test, return_counts = True)
+    logging.info("\ny_test status:")
+    logging.info(dict(zip(labels, counts)))
