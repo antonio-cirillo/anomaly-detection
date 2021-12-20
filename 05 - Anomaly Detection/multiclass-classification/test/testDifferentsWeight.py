@@ -8,6 +8,7 @@ from util.util import measureAccuracy
 from util.util import displayHeatMap
 from util.util import displayBarStacked
 from util.util import displayGroupedBar
+from util.util import logStatusTrainTestSplit
 from util.util import createDirectory
 
 import numpy as np
@@ -104,6 +105,11 @@ def test_differents_weight(weights):
         # Divido il dataset in 70% traning 30% test
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = 0.3, random_state = 42)
         
+        # Logghiamo lo stato del test
+        logging.info("\nTrainTest status:\n")
+        logStatusTrainTestSplit(sample.getLabelsList(), X_train, X_test, y_train, y_test)
+
+        # Conto il tempo per addestrare la random forest
         start_time = time.time()
 
         # Creiamo un'istanza di RandomForest composta da 100 alberi di decisione
@@ -145,7 +151,9 @@ def test_differents_weight(weights):
 
         print('...Finish test with weight ' + str(w))
 
-    displayGroupedBar(weights, accuracies, sample.getLabelsList())
+    # Mostro l'accuracy per le diverse etichette al cambiamento dei pesi
+    displayGroupedBar(weights, accuracies, sample.getLabelsList(),
+        IMAGE_PATH + 'grouped-bar.png')
 
 if __name__ == '__main__':
     test_different_weight([0.25, 0.5, 0.75, 1])
