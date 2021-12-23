@@ -111,6 +111,9 @@ class Sample:
         for df in self.df_list_:
             self.df_sample_ = self.df_sample_.append(df)
 
+        # Insert 0 inside parameter not init
+        self.df_sample_.loc[:, :] = self.df_sample_.loc[:, :].replace(np.nan, 0)
+
         # Update dataframe status
         self.__update_status__()
 
