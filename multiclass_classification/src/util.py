@@ -23,7 +23,7 @@ def plot_confusion_matrix(cm, label, confusion_matrix_path):
     df_cm = pd.DataFrame(cm, index=[i for i in label], columns=[i for i in label])
     sns.heatmap(df_cm, annot=True, fmt='.2f')
     fig = plt.gcf()
-    fig.set_size_inches(16, 12)
+    plt.subplots_adjust(bottom=0.3, left=0.2)
     fig.savefig(confusion_matrix_path, dpi=100)
     plt.close()
 
@@ -34,17 +34,16 @@ def plot_recall(labels, recall, recall_path):
     logging.disable(logging.CRITICAL)
 
     # create data
-    x_pos = np.arange(len(labels))
-
+    x_pos = np.arange(0, len(labels) * 2, 2)
     _recall = np.round(recall * 100, 2)
 
     # create bars
     plt.bar(x_pos, _recall, width=0.5)
 
     # rotation of the bar names
-    plt.xticks(x_pos, labels, rotation=90)
+    plt.xticks(x_pos, labels, rotation=70)
     # custom the subplot layout
-    plt.subplots_adjust(bottom=0.2, top=0.9)
+    plt.subplots_adjust(bottom=0.3, top=0.8)
     # enable grid
     plt.grid(True)
 
@@ -54,14 +53,13 @@ def plot_recall(labels, recall, recall_path):
     # print value on the top of bar
     x_locs, x_labs = plt.xticks()
     for i, v in enumerate(_recall):
-        plt.text(x_locs[i] - 0.15, v + 1, str(v))
+        plt.text(x_locs[i] - 0.6, v + 5, str(v))
 
     # set limit on y label
-    plt.ylim(0, max(_recall) + 5)
+    plt.ylim(0, max(_recall) + 15)
 
     # savefig
     fig = plt.gcf()
-    fig.set_size_inches(14, 10)
     fig.savefig(recall_path, dpi=100)
     plt.close()
 
