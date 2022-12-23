@@ -147,13 +147,13 @@ def test_on_training_test(dataset_path):
             w_accuracy_score_train = metrics.balanced_accuracy_score(y_train, y_pred_train)
             accuracy_score_test = metrics.accuracy_score(y_test, y_pred_test)
             w_accuracy_score_test = metrics.balanced_accuracy_score(y_test, y_pred_test)
-            m_precision = precision_score(y_test, y_pred_test, average='macro')
-            w_precision = precision_score(y_test, y_pred_test, average='weighted')
+            m_precision = precision_score(y_test, y_pred_test, average='macro', zero_division=1)
+            w_precision = precision_score(y_test, y_pred_test, average='weighted', zero_division=1)
             recall = recall_score(y_test, y_pred_test, average=None)
             m_recall = recall_score(y_test, y_pred_test, average='macro')
             w_recall = recall_score(y_test, y_pred_test, average='weighted')
-            m_f1 = f1_score(y_test, y_pred_test, average='macro')
-            w_f1 = f1_score(y_test, y_pred_test, average='weighted')
+            m_f1 = f1_score(y_test, y_pred_test, average='macro', zero_division=1)
+            w_f1 = f1_score(y_test, y_pred_test, average='weighted', zero_division=1)
 
             # append row to dataframe
             row = [model_name, '-', '-', accuracy_score_train, w_accuracy_score_train, accuracy_score_test,
@@ -207,13 +207,13 @@ def test_on_training_test(dataset_path):
                     w_accuracy_score_train = metrics.balanced_accuracy_score(y_train, y_pred_train)
                     accuracy_score_test = metrics.accuracy_score(y_test, y_pred_test)
                     w_accuracy_score_test = metrics.balanced_accuracy_score(y_test, y_pred_test)
-                    m_precision = precision_score(y_test, y_pred_test, average='macro')
-                    w_precision = precision_score(y_test, y_pred_test, average='weighted')
+                    m_precision = precision_score(y_test, y_pred_test, average='macro', zero_division=1)
+                    w_precision = precision_score(y_test, y_pred_test, average='weighted', zero_division=1)
                     recall = recall_score(y_test, y_pred_test, average=None)
                     m_recall = recall_score(y_test, y_pred_test, average='macro')
                     w_recall = recall_score(y_test, y_pred_test, average='weighted')
-                    m_f1 = f1_score(y_test, y_pred_test, average='macro')
-                    w_f1 = f1_score(y_test, y_pred_test, average='weighted')
+                    m_f1 = f1_score(y_test, y_pred_test, average='macro', zero_division=1)
+                    w_f1 = f1_score(y_test, y_pred_test, average='weighted', zero_division=1)
 
                     # append row to dataframe
                     row = [model_name, n_estimators, max_depth, accuracy_score_train, w_accuracy_score_train,
