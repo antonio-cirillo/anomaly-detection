@@ -1,0 +1,74 @@
+import matplotlib.pyplot as plt
+import seaborn as sns
+import pandas as pd
+import numpy as np
+
+import logging
+
+
+def log_train_test_status(list_attack_cat, y_train, y_test):
+    unique, counts = np.unique(y_train, return_counts=True)
+    logging.info('\ny_train status:')
+    logging.info(dict(zip(list_attack_cat, counts)))
+
+    unique, counts = np.unique(y_test, return_counts=True)
+    logging.info('\ny_pred status:')
+    logging.info(dict(zip(list_attack_cat, counts)))
+
+
+def plot_confusion_matrix(cm, label, confusion_matrix_path):
+    logging.disable(logging.CRITICAL)
+
+    cm = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
+    df_cm = pd.DataFrame(cm, index=[i for i in label], columns=[i for i in label])
+    sns.heatmap(df_cm, annot=True, fmt='.2f')
+    fig = plt.gcf()
+    fig.set_size_inches(16, 12)
+    fig.savefig(confusion_matrix_path, dpi=100)
+    plt.close()
+
+    logging.disable(logging.NOTSET)
+
+
+def plot_recall(labels, recall, recall_path):
+    logging.disable(logging.CRITICAL)
+
+    # create data
+    x_pos = np.arange(len(labels))
+
+    _recall = np.round(recall * 100, 2)
+
+    # create bars
+    plt.bar(x_pos, _recall, width=0.5)
+
+    # rotation of the bar names
+    plt.xticks(x_pos, labels, rotation=90)
+    # custom the subplot layout
+    plt.subplots_adjust(bottom=0.2, top=0.9)
+    # enable grid
+    plt.grid(True)
+
+    plt.title('Detection Rate')
+    plt.ylabel('recall score')
+
+    # print value on the top of bar
+    x_locs, x_labs = plt.xticks()
+    for i, v in enumerate(_recall):
+        plt.text(x_locs[i] - 0.15, v + 1, str(v))
+
+    # set limit on y label
+    plt.ylim(0, max(_recall) + 5)
+
+    # savefig
+    fig = plt.gcf()
+    fig.set_size_inches(14, 10)
+    fig.savefig(recall_path, dpi=100)
+    plt.close()
+
+    logging.disable(logging.NOTSET)
+
+
+def create_directory(p):
+    from pathlib import Path
+    path = Path(p)
+    path.mkdir(parents=True, exist_ok=True)
