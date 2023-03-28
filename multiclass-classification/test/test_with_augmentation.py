@@ -1,138 +1,251 @@
-from sklearn.preprocessing import StandardScaler
-from sklearn.model_selection import train_test_split
+from multiclass_classification.test import CONFUSION_MATRIX
+from multiclass_classification.test import DETECTION_RATE
+from multiclass_classification.test import SEPARATOR
+from multiclass_classification.test import LOGGER
+from multiclass_classification.test import CWD
+
+from multiclass_classification.src.util import plot_confusion_matrix
+from multiclass_classification.src.util import plot_recall
+from multiclass_classification.src.util import log_train_test_status
+from multiclass_classification.src.util import create_directory
+
 from sklearn.ensemble import RandomForestClassifier
-from sklearn import metrics
+from sklearn.ensemble import GradientBoostingClassifier
+import xgboost as xgb
 
 from imblearn.over_sampling import SMOTE
 
-from src.sample import Sample
-from src.util import get_measure_accuracy
-from src.util import create_heatmap
-from src.util import create_bar_stacked
-from src.util import create_grouped_bar
-from src.util import create_directory
-from src.util import log_train_test_status
+from sklearn import metrics
+from sklearn.metrics import recall_score
+from sklearn.metrics import precision_score
+from sklearn.metrics import f1_score
 
-from test import SEPARATOR
-from test import CWD
-from test import BAR_STACKED
-from test import HEATMAP
-from test import LOGGER
-from test import FEATURES
-
+import pandas as pd
+import numpy as np
 import logging
-import time
+import pickle
+import os
 
 # Declare all path
-NAME_DIR = '02 - Test with augmentation\\'
-IMAGE_PATH = CWD + 'image\\' + NAME_DIR
-IMAGE_PATH_BAR_STACKED = IMAGE_PATH + BAR_STACKED
-IMAGE_PATH_HEAT_MAP = IMAGE_PATH + HEATMAP
-LOG_PATH = CWD + 'log\\' + NAME_DIR + LOGGER
-DIRECTORIES = [IMAGE_PATH_BAR_STACKED, IMAGE_PATH_HEAT_MAP, LOG_PATH]
+NAME_DIR = '03 - Test with augmentation'
+MODEL_PATH = os.path.join(CWD, 'model', NAME_DIR)
+IMAGE_PATH = os.path.join(CWD, 'image', NAME_DIR)
+CONFUSION_MATRIX_PATH = os.path.join(IMAGE_PATH, CONFUSION_MATRIX)
+DETECTION_RATE_PATH = os.path.join(IMAGE_PATH, DETECTION_RATE)
+LOG_BASE = os.path.join(CWD, 'log', NAME_DIR)
+LOG_PATH = os.path.join(LOG_BASE, LOGGER)
+RESULT_PATH = os.path.join(LOG_BASE, 'results.csv')
+DIRECTORIES = [MODEL_PATH, LOG_BASE, CONFUSION_MATRIX_PATH, DETECTION_RATE_PATH]
 
-# Attack's label to extract
-list_attack = ['Backdoors', 'Analysis', 'Fuzzers', 'Shellcode', 'Reconnaissance',
-               'Exploits', 'DoS', 'Worms', 'Generic']
+# Mapping
+MAPPING = {
+    "Normal": 0,
+    "Worms": 1,
+    "Backdoors": 2,
+    "Shellcode": 3,
+    "Analysis": 4,
+    "Reconnaissance": 5,
+    "DoS": 6,
+    "Fuzzers": 7,
+    "Exploits": 8,
+    "Generic": 9
+}
+
+COLUMNS_RESULTS = ['models', 'n_estimators', 'max_depth', 'accuracy_train', 'weighted_accuracy_train',
+                   'accuracy_test', 'weighted_accuracy_test', 'macro_precision_avg', 'weighted_precision_avg',
+                   'macro_recall_avg', 'weighted_recall_avg', 'macro_f1_score_avg', 'weighted_f1_score_avg']
 
 
-def test_with_augmentation(weights):
-    # Create folder
+def __delete_string_columns__(df):
+    cols_to_remove = []
+
+    for col in df.columns:
+        try:
+            _ = df[col].astype(float)
+        except ValueError:
+            cols_to_remove.append(col)
+            pass
+
+    df_ = df[[col for col in df.columns if col not in cols_to_remove]]
+    return df_
+
+
+def test_with_augmentation(dataset_path):
+    # init directory
     for directory in DIRECTORIES:
         create_directory(directory)
-
-    # Init logger
+    # init logger
     logging.basicConfig(filename=LOG_PATH, format='%(message)s',
                         level=logging.DEBUG, filemode='w')
 
-    # Init list csv
-    list_csv = []
-    for i in range(1, 5):
-        list_csv.append(CWD + 'dataset\\UNSW-NB15_' + str(i) + '.csv')
+    # create path of training and test dataset
+    _file_name_training = 'UNSW_NB15_testing-set.csv'
+    _file_path_training = os.path.join(dataset_path, _file_name_training)
+    _file_name_testing = 'UNSW_NB15_training-set.csv'
+    _file_path_testing = os.path.join(dataset_path, _file_name_testing)
 
-    # Create sample object and log status
-    sample = Sample(list_csv=list_csv, list_attack=list_attack)
-    logging.info('Dataframe status before modifies:')
-    logging.info(sample)
+    # read dataframe
+    df_training = pd.read_csv(_file_path_training, low_memory=False)
+    df_testing = pd.read_csv(_file_path_testing, low_memory=False)
 
-    # Init list of accuracy for each weights
-    accuracies = []
+    # remove id
+    df_training = df_training.iloc[:, 1:]
+    df_testing = df_testing.iloc[:, 1:]
 
-    for weight in weights:
-        # Log test with weight = weight
-        print('\nStart test with weight ' + str(weight) + '...')
-        logging.info(SEPARATOR)
-        logging.info('Test with weight: ' + str(weight) + '\n')
+    # create df array
+    dfs = [df_training, df_testing]
 
-        # Generate sub dataframe with weight = weight
-        sample.generate_weighted_df(weight=weight)
-        logging.info('Dataframe status:')
-        logging.info(sample)
+    # clean data
+    for i in range(0, len(dfs)):
+        dfs[i]['attack_cat'] = dfs[i]['attack_cat'].str.strip()
+        # replace NaN with Normal
+        dfs[i]['attack_cat'] = dfs[i]['attack_cat'].replace(np.nan, 'Normal')
+        # fix bug on labels Backdoor
+        dfs[i]['attack_cat'] = dfs[i]['attack_cat'].replace('Backdoor', 'Backdoors')
+        # replace label 1 in {0, 1, 2, ..., 9}
+        dfs[i]['label'] = dfs[i]['attack_cat'].map(MAPPING)
+        dfs[i] = __delete_string_columns__(dfs[i])
+        dfs[i] = dfs[i].fillna(0)
 
-        # Extract sub dataframe and columns of labels
-        df, labels = sample.extract_sub_df(features=FEATURES)
+    # get x and y of training and test
+    x_train = dfs[0].iloc[:, :-1].values
+    y_train = dfs[0].iloc[:, -1].values
+    x_test = dfs[1].iloc[:, :-1].values
+    y_test = dfs[1].iloc[:, -1].values
+    logging.info("Dataset status")
+    log_train_test_status(MAPPING.keys(), y_train, y_test)
 
-        # Init X matrix and vectors y
-        X = df.iloc[:, :].values
-        y = labels.values
+    # create result dataframe
+    df = pd.DataFrame(columns=COLUMNS_RESULTS)
 
-        # Standardize value of matrix
-        X = StandardScaler().fit_transform(X)
+    # use smote
+    sm = SMOTE()
+    x_train, y_train = sm.fit_resample(x_train, y_train)
 
-        # Divide dataset in 70% train and 30% test
-        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3)
-        # Log status of train test before data augmentation
-        log_train_test_status(sample.get_list_attack_cat(), y_train, y_test)
+    # use different model on different max_depth
+    models = [xgb.XGBClassifier, xgb.XGBRFClassifier, RandomForestClassifier, GradientBoostingClassifier]
+    n_estimators_ = [100, 150, 200, 250, 300, 350, 400, 450, 500]
+    max_depths = [3, 4, 5]
+    for model in models:
+        model_name = model.__name__
+        if model == xgb.XGBRFClassifier or model == xgb.XGBClassifier:
+            params = {"model": str(model_name)}
+            model_path = os.path.join(MODEL_PATH, f'{model_name}.sav')
+            if os.path.exists(model_path):
+                with open(model_path, 'rb') as model_file:
+                    clf = pickle.load(model_file)
+                    print(f'Loaded model: {params}')
+            else:
+                print(f'Creating model: {params}')
+                clf = model()
+                clf.fit(x_train, y_train)
+                with open(model_path, 'wb') as model_file:
+                    pickle.dump(clf, model_file)
+                print(f'Saved model: {model_path}')
 
-        # Using SMOTE for data augmentation
-        sm = SMOTE()
-        X_train_res, y_train_res = sm.fit_resample(X_train, y_train)
-        # Log status of train test after data augmentation
-        log_train_test_status(sample.get_list_attack_cat(), y_train_res, y_test)
+            # predict on training
+            y_pred_train = clf.predict(x_train)
+            # predict on test
+            y_pred_test = clf.predict(x_test)
 
-        # Create random forest classifier
-        clf = RandomForestClassifier(n_estimators=100)
+            # get result
+            accuracy_score_train = metrics.accuracy_score(y_train, y_pred_train)
+            w_accuracy_score_train = metrics.balanced_accuracy_score(y_train, y_pred_train)
+            accuracy_score_test = metrics.accuracy_score(y_test, y_pred_test)
+            w_accuracy_score_test = metrics.balanced_accuracy_score(y_test, y_pred_test)
+            m_precision = precision_score(y_test, y_pred_test, average='macro')
+            w_precision = precision_score(y_test, y_pred_test, average='weighted')
+            recall = recall_score(y_test, y_pred_test, average=None)
+            m_recall = recall_score(y_test, y_pred_test, average='macro')
+            w_recall = recall_score(y_test, y_pred_test, average='weighted')
+            m_f1 = f1_score(y_test, y_pred_test, average='macro')
+            w_f1 = f1_score(y_test, y_pred_test, average='weighted')
 
-        # Start timing
-        start_time = time.time()
+            # append row to dataframe
+            row = [model_name, '-', '-', accuracy_score_train, w_accuracy_score_train, accuracy_score_test,
+                   w_accuracy_score_test, m_precision, w_precision, m_recall, w_recall, m_f1, w_f1]
+            df.loc[len(df.index)] = row
 
-        # Fit random forest
-        clf.fit(X_train_res, y_train_res)
+            # log results
+            logging.info(SEPARATOR)
+            logging.info(f'{params}')
+            logging.info(f'Accuracy on train: {accuracy_score_train}')
+            logging.info(f'Balanced accuracy on train: {w_accuracy_score_train}')
+            logging.info(f'Accuracy on test: {accuracy_score_test}')
+            logging.info(f'Balanced accuracy on test: {w_accuracy_score_test}')
+            logging.info(f'\n{metrics.classification_report(y_test, y_pred_test, digits=3)}')
 
-        # Test random forest
-        y_pred = clf.predict(X_test)
+            # plot confusion matrix
+            confusion_matrix_path = os.path.join(CONFUSION_MATRIX_PATH, f'{model_name}.jpeg')
+            cm = metrics.confusion_matrix(y_test, y_pred_test)
+            plot_confusion_matrix(cm, MAPPING.keys(), confusion_matrix_path)
 
-        # Stop timing and log it
-        logging.info('\nTime elapsed: ' + str(round(time.time() - start_time, 2)) + ' second(s)')
+            # plot detection rate
+            detection_rate_path = os.path.join(DETECTION_RATE_PATH, f'{model_name}.jpeg')
+            plot_recall(MAPPING.keys(), recall, detection_rate_path)
 
-        # Get accuracy and log it
-        logging.info('\nAccuracy: ' + str(metrics.accuracy_score(y_test, y_pred)))
+        else:
+            for max_depth in max_depths:
+                for n_estimators in n_estimators_:
+                    params = {"model": str(model_name), "n_estimators": n_estimators, "max_depth": max_depth}
+                    base_name = f'{model_name}-{n_estimators}_max_depth{max_depth}'
+                    model_path = os.path.join(MODEL_PATH, f'{base_name}.sav')
 
-        # Get matrix of accuracy
-        measure_accuracy = get_measure_accuracy(
-            sample.get_list_attack_cat(), y_test, y_pred)
+                    if os.path.exists(model_path):
+                        with open(model_path, 'rb') as model_file:
+                            clf = pickle.load(model_file)
+                            print(f'Loaded model: {params}')
+                    else:
+                        print(f'Creating model: {params}')
+                        clf = model(n_estimators=n_estimators, max_depth=max_depth)
+                        clf.fit(x_train, y_train)
+                        with open(model_path, 'wb') as model_file:
+                            pickle.dump(clf, model_file)
+                        print(f'Saved model: {model_path}')
 
-        # Create heatmap and save fig
-        accuracy = create_heatmap(measure_accuracy,
-                                  IMAGE_PATH_HEAT_MAP + 'heatmap-weight' + str(weight) + '.png')
-        # Append accuracy for each labels to accuracies array
-        accuracies.append(accuracy)
+                    # predict on training
+                    y_pred_train = clf.predict(x_train)
+                    # predict on test
+                    y_pred_test = clf.predict(x_test)
 
-        # Create bar stacked and save fig
-        create_bar_stacked(
-            measure_accuracy, sample.get_list_attack_cat()[1:],
-            IMAGE_PATH_BAR_STACKED + 'bar-stacked-weight' + str(weight) + '.png')
+                    # get result
+                    accuracy_score_train = metrics.accuracy_score(y_train, y_pred_train)
+                    w_accuracy_score_train = metrics.balanced_accuracy_score(y_train, y_pred_train)
+                    accuracy_score_test = metrics.accuracy_score(y_test, y_pred_test)
+                    w_accuracy_score_test = metrics.balanced_accuracy_score(y_test, y_pred_test)
+                    m_precision = precision_score(y_test, y_pred_test, average='macro')
+                    w_precision = precision_score(y_test, y_pred_test, average='weighted')
+                    recall = recall_score(y_test, y_pred_test, average=None)
+                    m_recall = recall_score(y_test, y_pred_test, average='macro')
+                    w_recall = recall_score(y_test, y_pred_test, average='weighted')
+                    m_f1 = f1_score(y_test, y_pred_test, average='macro')
+                    w_f1 = f1_score(y_test, y_pred_test, average='weighted')
 
-        # Log finish test
-        print('...Finish test with weight ' + str(weight))
+                    # append row to dataframe
+                    row = [model_name, n_estimators, max_depth, accuracy_score_train, w_accuracy_score_train,
+                           accuracy_score_test,
+                           w_accuracy_score_test, m_precision, w_precision, m_recall, w_recall, m_f1, w_f1]
+                    df.loc[len(df.index)] = row
 
-    # Create grouped bar and save fig
-    create_grouped_bar(accuracies, weights, sample.get_list_attack_cat(),
-                       IMAGE_PATH + 'grouped-bar.png')
+                    # log results
+                    logging.info(SEPARATOR)
+                    logging.info(f'{params}')
+                    logging.info(f'Accuracy on train: {accuracy_score_train}')
+                    logging.info(f'Balanced accuracy on train: {w_accuracy_score_train}')
+                    logging.info(f'Accuracy on test: {accuracy_score_test}')
+                    logging.info(f'Balanced accuracy on test: {w_accuracy_score_test}')
+                    logging.info(f'\n{metrics.classification_report(y_test, y_pred_test, digits=3)}')
 
-    # Close logger
+                    # plot confusion matrix
+                    confusion_matrix_path = os.path.join(CONFUSION_MATRIX_PATH, f'{base_name}.jpeg')
+                    cm = metrics.confusion_matrix(y_test, y_pred_test)
+                    plot_confusion_matrix(cm, MAPPING.keys(), confusion_matrix_path)
+
+                    # plot detection rate
+                    detection_rate_path = os.path.join(DETECTION_RATE_PATH, f'{base_name}.jpeg')
+                    plot_recall(MAPPING.keys(), recall, detection_rate_path)
+
+    df.to_csv(RESULT_PATH)
+
+    # close logger
     logging.shutdown()
-
-
-if __name__ == '__main__':
-    test_with_augmentation([0.25, 0.5, 0.75, 1])
